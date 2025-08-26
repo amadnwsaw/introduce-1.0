@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NovaSeek — AI 搜尋與協作</title>
+<meta name="description" content="NovaSeek 是一套專為即時搜尋與協作打造的 AI 平台，提供智慧搜尋、熱門關鍵字統計，以及 Novaseek Assembly 線上會議。">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2232%22 cy=%2232%22 r=%2228%22 fill=%22%2310113a%22/><path d=%22M14 36l12-16 6 6 8-10 10 22-36-2z%22 fill=%22%237050ff%22/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta property="og:title" content="NovaSeek — AI 搜尋與協作">
+<meta property="og:description" content="智慧搜尋、熱門關鍵字統計、Novaseek Assembly 線上會議。">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://www.novaseek.org/og-image.png">
+<meta name="theme-color" content="#0c0f3a" />
+<style>
+  :root{
+    --bg:#07071a;
+    --panel:#0f1030;
+    --card:#14143a;
+    --accent:#7050ff;
+    --accent-2:#56c1ff;
+    --text:#eef0ff;
+    --muted:#9aa0d9;
+    --glass: rgba(255,255,255,0.06);
+    --ok:#3bcc8b;
+    --danger:#d34b4b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:
+      radial-gradient(1200px 600px at 80% -10%, #16205a55 0%, transparent 60%),
+      radial-gradient(800px 480px at -10% 10%, #4526ff18 0%, transparent 70%),
+      #07071a;
+    color:var(--text); font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* header */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:linear-gradient(180deg,#0b0d26cc,#0a0b22aa 70%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom:1px solid #ffffff10;
+  }
+  .nav{
+    max-width:1200px; margin:0 auto; padding:12px 16px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .brand{display:flex; align-items:center; gap:10px; user-select:none; text-decoration:none}
+  .logoText{
+    font-family:'Orbitron',sans-serif; font-weight:700; letter-spacing:0.08em; font-size:1.25rem;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .logoSVG{width:28px; height:28px}
+  .navlinks{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+  .navlinks a{color:#dfe2ff; text-decoration:none; font-weight:600; font-size:0.95rem; opacity:0.9}
+  .navlinks a:hover{opacity:1}
+  .cta{background:var(--accent); color:#fff !important; padding:10px 14px; border-radius:12px; box-shadow:0 10px 24px rgba(112,80,255,0.2)}
+
+  /* hero */
+  .hero{
+    max-width:1200px; margin:0 auto; padding:28px 16px 10px;
+    display:grid; grid-template-columns: 1.15fr 1fr; gap:18px; align-items:center;
+  }
+  @media (max-width:980px){ .hero{grid-template-columns:1fr} }
+  .h-title{font-size:2.2rem; line-height:1.16; margin:4px 0 10px; font-weight:800}
+  .grad{background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+  .h-sub{color:var(--muted); font-size:1rem}
+  .bar{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+  .btn{border:none; outline:none; padding:10px 14px; border-radius:12px; background:#171a44; color:#fff; font-weight:700; cursor:pointer}
+  .btn.primary{background:var(--accent); box-shadow:0 12px 28px rgba(112,80,255,0.22)}
+  .btn.ghost{background:#1a1d4a}
+  .tiny{font-size:0.9rem; color:var(--muted)}
+  .heroCard{
+    background:linear-gradient(180deg,var(--panel),#0e1030); border:1px solid #ffffff12; border-radius:14px; padding:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,0.4)
+  }
+
+  /* search demo */
+  .searchBox{display:flex; gap:10px; align-items:center}
+  .searchBox input{
+    flex:1; padding:12px 14px; border-radius:12px; border:none; outline:none; background:#171a44; color:#fff;
+    box-shadow: inset 0 0 10px rgba(112,80,255,0.12);
+  }
+  .mic{background:#1a1d4a}
+  .results{
+    margin-top:12px; display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:12px; max-height:380px; overflow:auto; padding-right:6px;
+  }
+  .card{
+    background:linear-gradient(180deg,#181a4a,#12143a); border:1px solid #ffffff14; border-radius:12px; padding:10px;
+  }
+  .card img{width:100%; height:128px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:#000}
+  .card h4{margin:0 0 6px; font-size:1.02rem}
+  .card p{margin:0; color:#cfd2ff; font-size:0.92rem}
+  .card small{color:#9aa0d9}
+
+  /* section */
+  .section{max-width:1200px; margin:0 auto; padding:22px 16px}
+  .secTitle{font-weight:800; font-size:1.4rem; margin-bottom:12px}
+  .grid{display:grid; grid-template-columns: repeat(3,1fr); gap:14px}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+  .feat{background:linear-gradient(180deg,#15173f,#12143a); border:1px solid #ffffff12; padding:14px; border-radius:12px}
+  .feat h3{margin:0 0 6px}
+  .feat p{margin:0; color:#cfd2ff}
+  .tag{display:inline-block; padding:4px 10px; border-radius:999px; font-size:0.8rem; background:#10123a; border:1px solid #ffffff14; color:#9cc9ff}
+
+  /* chart */
+  .chartCard{background:linear-gradient(180deg,#15173f,#12143a); border:1px solid #ffffff12; padding:14px; border-radius:12px}
+
+  /* footer */
+  footer{
+    border-top:1px solid #ffffff10; color:var(--muted);
+    background:linear-gradient(180deg,#0a0b22, #090a1c);
+  }
+  .foot{max-width:1200px; margin:0 auto; padding:18px 16px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap}
+  .links{display:flex; gap:12px; flex-wrap:wrap}
+  .links a{color:#bfc5ff; text-decoration:none}
+  .links a:hover{color:#e2e6ff}
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; background:#10123a; border:1px solid #ffffff14; border-radius:999px}
+
+  /* helpers */
+  .muted{color:var(--muted)}
+  .ok{color:var(--ok)}
+  .danger{color:var(--danger)}
+  .sr{position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden}
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav">
+    <a href="#" class="brand" aria-label="NovaSeek 首頁">
+      <!-- 簡易幾何 N 標誌 -->
+      <svg class="logoSVG" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1">
+            <stop offset="0%" stop-color="#7050ff"/><stop offset="100%" stop-color="#56c1ff"/>
+          </linearGradient>
+        </defs>
+        <rect x="6" y="6" width="52" height="52" rx="14" fill="#10113a" stroke="url(#g1)" stroke-width="2"/>
+        <path d="M18 44V20l18 16V20h10v24L28 28v16H18z" fill="url(#g1)"/>
+      </svg>
+      <div class="logoText">NovaSeek</div>
+    </a>
+    <div class="navlinks">
+      <a href="#features">特色</a>
+      <a href="#demo">搜尋 Demo</a>
+      <a href="#stats">趨勢</a>
+      <a href="#faq">FAQ</a>
+      <!-- TODO: 改成你的實際路徑 -->
+      <a class="cta" href="https://www.novaseek.org/app" target="_blank" rel="noopener">開始使用</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero" id="top">
+  <div>
+    <div class="tag">AI 搜尋平台</div>
+    <h1 class="h-title">更快找到答案，<span class="grad">更聰明地探索資訊</span></h1>
+    <p class="h-sub">NovaSeek 結合智慧搜尋、熱門關鍵字統計與 <strong>Novaseek Assembly</strong> 視訊會議，打造一站式知識探索與協作體驗。</p>
+    <div class="bar">
+      <!-- TODO: 改成你的實際前台與後台連結 -->
+      <a class="btn primary" href="https://www.novaseek.org" target="_blank" rel="noopener">前往前台</a>
+      <a class="btn ghost" href="https://admin.novaseek.org/" target="_blank" rel="noopener">管理後台</a>
+      <a class="btn ghost" href="https://assembly.novaseek.org/" target="_blank" rel="noopener">Novaseek Assembly</a>
+    </div>
+    <p class="tiny" style="margin-top:10px">提示：本頁下方提供可互動的「搜尋 Demo」與「趨勢圖表」。</p>
+  </div>
+
+  <div class="heroCard">
+    <h2 class="sr" id="demo-title">搜尋 Demo</h2>
+    <div class="searchBox" aria-labelledby="demo-title">
+      <input id="searchInput" placeholder="輸入關鍵字（支援 Enter / 點擊搜尋）" autocomplete="off" />
+      <button id="searchBtn" class="btn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg></button>
+      <button id="micBtn" class="btn mic" title="語音搜尋"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M480-400q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-40 520v-123q-104-14-172-93t-68-184h80q0 83 58.5 141.5T480-320q83 0 141.5-58.5T680-520h80q0 105-68 184t-172 93v123h-80Zm40-360q17 0 28.5-11.5T520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480Z"/></svg></button>
+    </div>
+    <div id="results" class="results" aria-live="polite"></div>
+
+    <div style="display:grid; grid-template-columns:1fr 300px; gap:12px; margin-top:12px">
+      <div class="chartCard" id="stats">
+        <div class="muted" style="margin-bottom:6px">本裝置近況 · 熱門關鍵字</div>
+        <canvas id="searchChart" height="130"></canvas>
+      </div>
+      <div class="chartCard">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>快速推薦</div>
+          <button class="btn" id="shuffleBtn" title="換一批">🔄</button>
+        </div>
+        <div id="suggestBox" class="muted" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <h2 class="secTitle">特色功能</h2>
+  <div class="grid">
+    <div class="feat">
+      <h3>⚡ 即時搜尋</h3>
+      <p>前端零等待、即打即搜；支援語音輸入、模糊比對、關鍵字權重。</p>
+    </div>
+    <div class="feat">
+      <h3>📊 趨勢洞察</h3>
+      <p>整合搜尋紀錄，輸出熱門關鍵字統計與走勢圖。</p>
+    </div>
+    <div class="feat">
+      <h3>🧑‍🤝‍🧑 Novaseek Assembly</h3>
+      <p>一鍵建立會議、分享連結、聊天與螢幕分享，遠端協作更順暢。</p>
+    </div>
+    <div class="feat">
+      <h3>🔒 權限與安全</h3>
+      <p>後台以指定帳號登入，支援上傳資源、批次匯入、資料匯出。</p>
+    </div>
+    <div class="feat">
+      <h3>🧩 模組化</h3>
+      <p>前後台皆可獨立部署與擴充，維護簡單、版本切換快速。</p>
+    </div>
+    <div class="feat">
+      <h3>🎯 SEO 友善</h3>
+      <p>整潔的語意化標記與快速載入，對搜尋引擎更友善。</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="grid">
+    <div class="feat">
+      <h3>上手超快</h3>
+      <p>支援靜態主機（Vercel/Netlify）直接部署，改文字就上線。</p>
+    </div>
+    <div class="feat">
+      <h3>可換你自己的資料</h3>
+      <p>本頁 Demo 內建範例資料；正式版請串你的 Firestore/後端 API。</p>
+    </div>
+    <div class="feat">
+      <h3>易客製化</h3>
+      <p>統一的色票與元件樣式，輕鬆改出你的品牌風格。</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <h2 class="secTitle">常見問題</h2>
+  <div class="grid">
+    <div class="feat">
+      <h3>可以改成接我的資料庫嗎？</h3>
+      <p>可以。把搜尋函式改為呼叫你的 API 或 Firestore 集合即可。</p>
+    </div>
+    <div class="feat">
+      <h3>語音搜尋支援哪些瀏覽器？</h3>
+      <p>Chrome/Edge 基本可用（webkitSpeechRecognition）。Safari 可能受限。</p>
+    </div>
+    <div class="feat">
+      <h3>趨勢圖表來源？</h3>
+      <p>本頁 Demo 以瀏覽器 LocalStorage 記錄；正式版建議寫入後台再統計。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div class="pill">
+      <svg class="logoSVG" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="g2" x1="0" x2="1">
+            <stop offset="0%" stop-color="#7050ff"/><stop offset="100%" stop-color="#56c1ff"/>
+          </linearGradient>
+        </defs>
+        <rect x="6" y="6" width="52" height="52" rx="14" fill="#10113a" stroke="url(#g2)" stroke-width="2"/>
+        <path d="M18 44V20l18 16V20h10v24L28 28v16H18z" fill="url(#g2)"/>
+      </svg>
+      <strong>NovaSeek</strong>
+    </div>
+    <div class="links">
+      <a href="#features">特色</a>
+      <a href="#demo">Demo</a>
+      <a href="#faq">FAQ</a>
+      <a href="mailto:hello@novaseek.org">聯絡我們</a>
+      <span>© 2025 novaseek.org</span>
+    </div>
+  </div>
+</footer>
+
+<!-- 前端互動（搜尋/圖表/語音） -->
+<script>
+  // ======== 範例資料（正式版改成串你的 API）========
+  const sampleData = [
+    { title:"如何使用 NovaSeek 前台", description:"快速上手指南與最佳實務", image:"https://images.unsplash.com/photo-1526378722484-bd91ca387e72?q=80&w=800&auto=format&fit=crop" },
+    { title:"Assembly 螢幕分享技巧", description:"教你用最清晰的方式分享畫面", image:"https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800&auto=format&fit=crop" },
+    { title:"熱門關鍵字統計設計", description:"如何解讀趨勢與提升內容品質", image:"https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" },
+    { title:"建立你的資料索引策略", description:"標籤、權重、斷詞的實務整理", image:"https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=800&auto=format&fit=crop" },
+    { title:"SEO 友善輸出", description:"結構化資料與語意化標記", image:"https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=800&auto=format&fit=crop" },
+    { title:"管理後台最佳做法", description:"權限控管、匯入匯出與備份", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" },
+    { title:"打造你的品牌頁", description:"色票、Logo 與元件一致性", image:"https://images.unsplash.com/photo-1493119508027-2b584f234d6c?q=80&w=800&auto=format&fit=crop" },
+    { title:"資料品質檢查清單", description:"欄位完整性、圖片尺寸、內容重覆", image:"https://images.unsplash.com/photo-1532619187608-e5375cab36aa?q=80&w=800&auto=format&fit=crop" },
+    { title:"語音搜尋 UX", description:"指令設計、錯誤回饋與隱私", image:"https://images.unsplash.com/photo-1518779572348-2aa5e03f2c5d?q=80&w=800&auto=format&fit=crop" }
+  ];
+
+  // ======== DOM ========
+  const resultsEl = document.getElementById('results');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const micBtn = document.getElementById('micBtn');
+  const suggestBox = document.getElementById('suggestBox');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+
+  // ======== 搜尋 ========
+  function renderResults(items){
+    resultsEl.innerHTML = "";
+    if (!items.length){
+      resultsEl.innerHTML = `<div class="muted">找不到結果，試試其他關鍵字。</div>`;
+      return;
+    }
+    for (const it of items){
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <img src="${escapeHtml(it.image || '')}" alt="${escapeHtml(it.title)}" onerror="this.src='https://via.placeholder.com/640x360?text=NovaSeek'">
+        <h4>${escapeHtml(it.title)}</h4>
+        <p>${escapeHtml(truncate(it.description, 140))}</p>
+      `;
+      resultsEl.appendChild(div);
+    }
+  }
+
+  function performSearch(keyword){
+    const k = (keyword||"").trim();
+    if (!k){ renderResults(sampleData.slice(0,6)); return; }
+    // 優先檢索：title > description
+    const lk = k.toLowerCase();
+    const filtered = sampleData.filter(d =>
+      (d.title && d.title.toLowerCase().includes(lk)) ||
+      (d.description && d.description.toLowerCase().includes(lk))
+    );
+    renderResults(filtered);
+    // 記錄搜尋
+    logSearch(k);
+    // 更新圖表
+    refreshChart();
+  }
+
+  function truncate(s, n){ return (s||"").length>n ? s.slice(0,n-1)+"…" : (s||""); }
+  function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c])); }
+
+  searchBtn.addEventListener('click', () => performSearch(searchInput.value));
+  searchInput.addEventListener('keydown', (e) => { if (e.key === "Enter") performSearch(searchInput.value); });
+
+  // ======== 語音搜尋 ========
+  (function initVoice(){
+    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Rec){ micBtn.disabled = true; micBtn.title = "此瀏覽器不支援語音辨識"; return; }
+    const rec = new Rec(); rec.lang = 'zh-TW'; rec.interimResults = false;
+    micBtn.addEventListener('click', () => rec.start());
+    rec.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      searchInput.value = t;
+      performSearch(t);
+    };
+    rec.onerror = e => alert("語音辨識錯誤: " + e.error);
+  })();
+
+  // ======== 推薦關鍵字 ========
+  const seedSuggestions = [
+    "前台操作", "Assembly 會議", "熱門關鍵字", "匯入範例", "SEO", "權限控管", "視覺設計", "資料品質", "語音搜尋"
+  ];
+  function renderSuggest(){
+    suggestBox.innerHTML = "";
+    const pool = [...seedSuggestions];
+    const picks = [];
+    while (picks.length<6 && pool.length){
+      const i = Math.floor(Math.random()*pool.length);
+      picks.push(pool.splice(i,1)[0]);
+    }
+    for (const s of picks){
+      const a = document.createElement('a');
+      a.href = "javascript:void(0)";
+      a.className = "tag";
+      a.textContent = s;
+      a.onclick = () => { searchInput.value = s; performSearch(s); };
+      suggestBox.appendChild(a);
+    }
+  }
+  renderSuggest();
+  shuffleBtn.addEventListener('click', renderSuggest);
+
+  // ======== 熱門關鍵字圖（LocalStorage） ========
+  const LS_KEY = "novaseek_search_logs";
+  function loadLogs(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY)||"[]"); }catch{ return []; }
+  }
+  function saveLogs(arr){
+    localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(-200))); // 限制最多 200 筆
+  }
+  function logSearch(k){
+    const arr = loadLogs();
+    arr.push({k, ts: Date.now()});
+    saveLogs(arr);
+  }
+  const ctx = document.getElementById('searchChart').getContext('2d');
+  let chart;
+  function refreshChart(){
+    const arr = loadLogs();
+    const counts = {};
+    for (const r of arr){ const key = r.k.trim(); if (!key) continue; counts[key] = (counts[key]||0) + 1; }
+    const labels = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,8);
+    const data = labels.map(l => counts[l]);
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'搜尋次數', data, backgroundColor:'rgba(112,80,255,0.9)', borderRadius:6 }] },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:'#cfd2ff' }, grid:{ color:'#ffffff10' } },
+          y:{ ticks:{ color:'#cfd2ff', stepSize:1 }, grid:{ color:'#ffffff10' }, beginAtZero:true }
+        }
+      }
+    });
+  }
+
+  // 初始載入
+  renderResults(sampleData.slice(0,6));
+  refreshChart();
+
+  // ======== 深連結：若有 ?q=keyword 自動搜尋 ========
+  const params = new URLSearchParams(location.search);
+  const q = params.get('q');
+  if (q){ searchInput.value = q; performSearch(q); }
+</script>
+
+</body>
+</html>
